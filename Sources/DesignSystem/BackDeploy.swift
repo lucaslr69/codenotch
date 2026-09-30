@@ -61,4 +61,34 @@ extension View {
             self
         }
     }
+
+    /// `.pointerStyle(.grabIdle)` (macOS 15) shows the open-hand cursor on
+    /// hover. On 13/14 the cursor rect + `GrabCursor` overlay beside this call
+    /// already covers the cursor, so dropping the modifier loses nothing.
+    @ViewBuilder
+    func grabPointerStyle(_ active: Bool) -> some View {
+        if #available(macOS 15.0, *) {
+            pointerStyle(active ? .grabIdle : nil)
+        } else {
+            self
+        }
+    }
+}
+
+extension Path {
+    /// `union(_:eoFill:)` (macOS 14) merges two paths into one outline. On 13
+    /// the paths are appended instead: filled or clipped with the default
+    /// non-zero winding — which is how this shape is always used — the two
+    /// overlapping pieces paint the same region a true union would. The seam a
+    /// union removes only reappears when the combined path is *stroked*, which
+    /// this one never is.
+    func unioned(with other: Path) -> Path {
+        if #available(macOS 14.0, *) {
+            return union(other)
+        } else {
+            var merged = self
+            merged.addPath(other)
+            return merged
+        }
+    }
 }

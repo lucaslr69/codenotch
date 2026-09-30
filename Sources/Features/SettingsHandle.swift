@@ -231,11 +231,22 @@ struct SettingsOrb: View {
             }
             // A beat late, so the dots beside it have run back into it while
             // it is still the button there to take them.
-            withAnimation(.timingCurve(0.3, 0, 0.2, 1, duration: releaseHome ? 0.34 : 0.4)
-                            .delay(releaseHome ? 0 : 0.1)) {
-                release = 1
-            } completion: {
-                if !isHovered { releasing = false }
+            let duration = releaseHome ? 0.34 : 0.4
+            let delay = releaseHome ? 0.0 : 0.1
+            let curve = Animation.timingCurve(0.3, 0, 0.2, 1, duration: duration).delay(delay)
+            if #available(macOS 14.0, *) {
+                withAnimation(curve) {
+                    release = 1
+                } completion: {
+                    if !isHovered { releasing = false }
+                }
+            } else {
+                // No completion handler before macOS 14: run the release, then
+                // clear `releasing` after the animation would have finished.
+                withAnimation(curve) { release = 1 }
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay + duration) {
+                    if !isHovered { releasing = false }
+                }
             }
         }
         // A newer version waiting: a red dot on the middle of the arc, which

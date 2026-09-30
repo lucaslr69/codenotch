@@ -152,7 +152,7 @@ struct TooltipSilhouette: Shape {
 
         return RoundedRectangle(cornerRadius: NotchLayout.cardCorner, style: .circular)
             .path(in: cardRect)
-            .union(TooltipTail(direction: direction).path(in: tailRect))
+            .unioned(with: TooltipTail(direction: direction).path(in: tailRect))
     }
 }
 

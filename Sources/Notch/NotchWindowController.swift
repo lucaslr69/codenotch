@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 import Combine
+import QuartzCore
 
 @MainActor
 final class NotchWindowController {
@@ -702,8 +703,7 @@ final class NotchWindowController {
     private var travelTarget: CGFloat?
     private var travelShown: CGFloat?
     private var travelVelocity: CGFloat = 0
-    private var follower: CADisplayLink?
-    private var ticker: DisplayTick?
+    private var follower: FrameDriving?
     private var lastTick: CFTimeInterval?
 
     /// **The notch follows the hand on a spring**, not an ease: it carries its
@@ -745,31 +745,33 @@ final class NotchWindowController {
         // On the display's own beat, once a frame — a timer of its own ran in
         // and out of step with the screen and moved the notch twice in one
         // frame and not at all in the next.
-        let tick = DisplayTick { [weak self] link in
-            MainActor.assumeIsolated { self?.follow(link) }
+        let onTick: (FrameTick) -> Void = { [weak self] tick in
+            MainActor.assumeIsolated { self?.follow(tick) }
         }
-        let link = screen.displayLink(target: tick, selector: #selector(DisplayTick.tick(_:)))
-        // Common modes: the drag holds the run loop in event tracking.
-        link.add(to: .main, forMode: .common)
-        follower = link
-        ticker = tick
+        // `NSScreen.displayLink` is macOS 14+. Before that a timer approximating
+        // the beat drives the same spring — the step below clamps the elapsed
+        // time, so an irregular frame is harmless.
+        if #available(macOS 14.0, *) {
+            follower = DisplayLinkDriver(screen: screen, onTick: onTick)
+        } else {
+            follower = TimerDriver(onTick: onTick)
+        }
         lastTick = nil
     }
 
     private func stopFollowing() {
-        follower?.invalidate()
+        follower?.stop()
         follower = nil
-        ticker = nil
         lastTick = nil
     }
 
     /// One frame: the spring's pull toward where the hand has it, and the
     /// notch drawn where that leaves it — stretched by how fast it is going.
-    private func follow(_ link: CADisplayLink) {
+    private func follow(_ tick: FrameTick) {
         guard let target = travelTarget, let screen = currentScreen() else { return }
         let track = BorderTrack(width: screen.frame.width, height: screen.frame.height)
-        let elapsed = CGFloat(min(max(link.timestamp - (lastTick ?? link.timestamp - link.duration), 0), 1.0 / 30))
-        lastTick = link.timestamp
+        let elapsed = CGFloat(min(max(tick.timestamp - (lastTick ?? tick.timestamp - tick.duration), 0), 1.0 / 30))
+        lastTick = tick.timestamp
         guard let shown = travelShown else {
             travelShown = target
             travelVelocity = 0
@@ -2124,9 +2126,64 @@ extension Array {
     }
 }
 
-/// Receives a display link's ticks for something that is not an `NSObject`.
-final class DisplayTick: NSObject {
-    private let action: (CADisplayLink) -> Void
-    init(_ action: @escaping (CADisplayLink) -> Void) { self.action = action }
-    @objc func tick(_ link: CADisplayLink) { action(link) }
+/// One frame of the follow loop, abstracted away from `CADisplayLink` (macOS
+/// 14+) so `follow` reads the same two numbers whichever driver produced them.
+struct FrameTick {
+    let timestamp: CFTimeInterval
+    let duration: CFTimeInterval
+}
+
+/// A per-frame driver the notch's follow loop can start and stop without
+/// knowing whether a display link or a timer is behind it.
+protocol FrameDriving: AnyObject {
+    func stop()
+}
+
+/// macOS 14+ driver: the display's own beat, via `NSScreen.displayLink`. The
+/// link retains its target, so this object holds the link and invalidates it on
+/// `stop`, breaking the cycle.
+@available(macOS 14.0, *)
+final class DisplayLinkDriver: NSObject, FrameDriving {
+    private var link: CADisplayLink?
+    private let onTick: (FrameTick) -> Void
+
+    init(screen: NSScreen, onTick: @escaping (FrameTick) -> Void) {
+        self.onTick = onTick
+        super.init()
+        let link = screen.displayLink(target: self, selector: #selector(tick(_:)))
+        // Common modes: the drag holds the run loop in event tracking.
+        link.add(to: .main, forMode: .common)
+        self.link = link
+    }
+
+    @objc private func tick(_ link: CADisplayLink) {
+        onTick(FrameTick(timestamp: link.timestamp, duration: link.duration))
+    }
+
+    func stop() {
+        link?.invalidate()
+        link = nil
+    }
+}
+
+/// macOS 13 fallback: a run-loop timer at roughly 60 Hz, with timestamps read
+/// from `CACurrentMediaTime`. Added in common modes so it keeps firing while a
+/// drag holds the run loop in event tracking, like the display link does.
+final class TimerDriver: FrameDriving {
+    private var timer: Timer?
+    private let interval: CFTimeInterval = 1.0 / 60
+
+    init(onTick: @escaping (FrameTick) -> Void) {
+        let interval = self.interval
+        let timer = Timer(timeInterval: interval, repeats: true) { _ in
+            onTick(FrameTick(timestamp: CACurrentMediaTime(), duration: interval))
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        self.timer = timer
+    }
+
+    func stop() {
+        timer?.invalidate()
+        timer = nil
+    }
 }
