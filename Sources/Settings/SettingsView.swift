@@ -286,16 +286,11 @@ private struct SettingsSidebarRow: View {
     private var icon: some View {
         if let logo = section.logo {
             ProviderGlyphView(glyph: logo, size: 14)
-                .keyframeAnimator(initialValue: 1.0, trigger: bounce) { content, scale in
-                    content.scaleEffect(scale)
-                } keyframes: { _ in
-                    SpringKeyframe(1.18, duration: 0.14)
-                    SpringKeyframe(1.0, duration: 0.3, spring: .bouncy)
-                }
+                .bouncePop(trigger: bounce, peak: 1.18)
         } else {
             Image(systemName: section.icon)
                 .font(.system(size: indent ? 12 : 13, weight: .regular))
-                .symbolEffect(.bounce, value: bounce)
+                .bounceSymbol(value: bounce)
         }
     }
 }
@@ -1869,7 +1864,7 @@ private struct AccountRow: View {
                             TextField(L10n.t("Name"), text: $draftName, prompt: Text(provider.name))
                                 .textFieldStyle(.roundedBorder)
                                 .onSubmit { isRenaming = false }
-                                .onChange(of: draftName) { _, name in
+                                .onChange(of: draftName) { name in
                                     preferences.setNickname(name, for: provider.id)
                                 }
                             Text(L10n.t("What the notch, the menu bar and notifications call this account. Empty goes back to \(provider.name)."))

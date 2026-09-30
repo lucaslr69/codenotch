@@ -192,7 +192,7 @@ struct ProviderRing: View {
         // ring is the button, so the ring is what should feel pressed.
         .scaleEffect(isRefreshing ? 0.93 : 1)
         .animation(.spring(response: 0.3, dampingFraction: 0.62), value: isRefreshing)
-        .onChange(of: isRefreshing) { _, refreshing in
+        .onChange(of: isRefreshing) { refreshing in
             guard refreshing, !reduceMotion else { return }
             // Exactly one turn, and it stops by itself.
             //

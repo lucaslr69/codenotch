@@ -71,7 +71,7 @@ struct OllamaSettingsRow: View {
         .font(.caption)
         .fixedSize(horizontal: false, vertical: true)
         .onAppear { address = preferences.ollamaEndpoint }
-        .onChange(of: address) { _, _ in addressError = nil }
+        .onChange(of: address) { _ in addressError = nil }
     }
 
     private func applyAddress() {

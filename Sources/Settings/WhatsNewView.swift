@@ -13,7 +13,7 @@ struct WhatsNewView: View {
             // release with a dozen entries would otherwise run off the bottom
             // of it — where the Continue button is.
             ScrollView { WhatsNewChanges(changes: note.changes) }
-                .scrollBounceBehavior(.basedOnSize)
+                .scrollBounceBasedOnSize()
 
             Divider()
             HStack {

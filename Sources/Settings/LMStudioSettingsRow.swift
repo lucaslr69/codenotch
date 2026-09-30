@@ -72,7 +72,7 @@ struct LMStudioSettingsRow: View {
         .font(.caption)
         .fixedSize(horizontal: false, vertical: true)
         .onAppear { address = preferences.lmstudioEndpoint }
-        .onChange(of: address) { _, _ in addressError = nil }
+        .onChange(of: address) { _ in addressError = nil }
     }
 
     /// Only needed when LM Studio's "Require API token" is on. Stored in the

@@ -1,0 +1,72 @@
+name: Ventura Intel build
+
+# A build that runs on an Intel Mac old enough to be on macOS 13 (Ventura).
+# Two things make that possible and neither is the default the release path
+# takes:
+#
+#   * The deployment target is 13.0 (project.yml), so the binary links against
+#     symbols available on Ventura and every newer API is behind an
+#     `if #available` guard.
+#   * ARCH=x86_64. The macos-26 runner is Apple Silicon, so the ordinary
+#     `make dmg-ci` produces an arm64-only dmg that cannot run on an Intel Mac
+#     at all. Overriding ARCH cross-compiles the Intel slice instead.
+#
+# Unlike Package, this one carries no repository gate and writes no release, so
+# it runs on a fork and just hands back a downloadable dmg. It runs on every
+# push to the `ventura-intel` branch, and can also be started by hand from the
+# Actions tab (Run workflow) once the file reaches the default branch — a
+# workflow_dispatch is only offered there, which is why the push trigger
+# exists: it works from a feature branch too.
+on:
+  push:
+    branches: [ventura-intel]
+  workflow_dispatch:
+
+jobs:
+  ventura-intel:
+    name: Intel disk image for macOS 13
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun --show-sdk-version
+
+      - name: Install dependencies
+        run: brew install xcodegen create-dmg
+
+      # ARCH=x86_64 is the whole point — see the header. The macOS 26 SDK on the
+      # runner still compiles the Liquid Glass code (it is behind macOS 26
+      # availability checks that are simply false on Ventura at run time).
+      - name: Build the Intel disk image
+        run: make dmg-ci ARCH=x86_64
+
+      - name: Read the version
+        id: version
+        run: |
+          echo "value=$(awk -F'"' '/MARKETING_VERSION:/ {print $2}' project.yml)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Codenotch-${{ steps.version.outputs.value }}-ventura-intel-${{ github.sha }}
+          path: build/ci/*.dmg
+          if-no-files-found: error
+
+      - name: Explain how to open it
+        run: |
+          {
+            echo "### Codenotch ${{ steps.version.outputs.value }} — Intel build for macOS 13"
+            echo
+            echo "Download the artifact below, unzip it, and open the \`.dmg\`."
+            echo "Drag Codenotch to /Applications, then clear the quarantine flag once:"
+            echo
+            echo '```'
+            echo "xattr -dr com.apple.quarantine /Applications/Codenotch.app"
+            echo '```'
+            echo
+            echo "If macOS says the app is *damaged*, that is the quarantine flag — run the command above."
+            echo
+            echo "x86_64 only. Runs on macOS 13 (Ventura) and later, Intel or Apple Silicon via Rosetta."
+          } >> "$GITHUB_STEP_SUMMARY"

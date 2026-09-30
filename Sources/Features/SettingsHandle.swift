@@ -216,7 +216,7 @@ struct SettingsOrb: View {
                                                               reduceMotion),
                            value: spins)
         }
-        .onChange(of: isHovered) { _, hovered in
+        .onChange(of: isHovered) { hovered in
             guard !glassy, !convex, !reduceMotion else { return }
             if hovered {
                 releasing = false
@@ -270,13 +270,7 @@ struct SettingsOrb: View {
         // not exist here.
         //
         // Down fast and back slower: a press is sharp, a release settles.
-        .keyframeAnimator(initialValue: CGFloat(1), trigger: spins) { orb, scale in
-            orb.scaleEffect(scale)
-        } keyframes: { _ in
-            SpringKeyframe(reduceMotion ? 1 : Self.squeezeScale,
-                           duration: 0.09, spring: .snappy)
-            SpringKeyframe(1, duration: 0.34, spring: .bouncy)
-        }
+        .pressSqueeze(trigger: spins, squeeze: reduceMotion ? 1 : Self.squeezeScale)
     }
 }
 

@@ -205,7 +205,7 @@ struct NotchRootView: View {
         .environment(\.usageCriticalLimit, model.criticalLimit)
         .environment(\.colorTransitionStyle, model.colorTransitionStyle)
         .onAppear { arcSeparation = arcsOut ? 1 : 0 }
-        .onChange(of: arcsOut) { _, open in
+        .onChange(of: arcsOut) { open in
             // Both ways as motion, from wherever it is: out as the notch opens,
             // back into the black as it folds. Put back on a timer once the
             // fold had finished instead, a hover inside that time found the

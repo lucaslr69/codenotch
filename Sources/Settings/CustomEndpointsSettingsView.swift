@@ -413,7 +413,7 @@ struct CustomEndpointsSettingsView: View {
                     HStack {
                         if showApiKey {
                             TextField(L10n.t("sk-... (optional for local)"), text: $draftAPIKey)
-                                .onChange(of: draftAPIKey) { _, _ in
+                                .onChange(of: draftAPIKey) { _ in
                                     usageDetectionResult = nil
                                     if !hasManuallySelectedSource && isDetectionEligible {
                                         scheduleAutomaticDiscovery()
@@ -422,7 +422,7 @@ struct CustomEndpointsSettingsView: View {
                                 .textFieldStyle(.roundedBorder)
                         } else {
                             SecureField(L10n.t("sk-... (optional for local)"), text: $draftAPIKey)
-                                .onChange(of: draftAPIKey) { _, _ in
+                                .onChange(of: draftAPIKey) { _ in
                                     usageDetectionResult = nil
                                     if !hasManuallySelectedSource && isDetectionEligible {
                                         scheduleAutomaticDiscovery()
