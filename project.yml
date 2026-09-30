@@ -93,27 +93,25 @@ targets:
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
         NSLocalNetworkUsageDescription: "Codenotch answers your phone on this network so it can show your usage."
         # --- Sparkle -------------------------------------------------------
-        # Beside the download itself, on hivinz.com. It used to point at a
-        # GitHub Pages URL for a repo that was never created, so every check
-        # got a 404 and Sparkle reported "an error occurred in retrieving
-        # update information" — correctly, since there was nothing there.
+        # Auto-update is deliberately DISABLED on the Ventura (macOS 13) fork.
+        # The official feed at hivinz.com only serves macOS 15 builds, so a
+        # check here would offer this 13-compatible copy an update it cannot
+        # run ("this software needs to be updated"). With no SUFeedURL there is
+        # no feed, so nothing is ever offered; `Updater.start()` catches the
+        # resulting error and simply does no checks. To re-enable updates
+        # against a feed you control, restore SUFeedURL (and a matching
+        # SUPublicEDKey) and set SUEnableAutomaticChecks back to true.
         #
-        # Must stay reachable for as long as any copy is installed: the feed is
-        # the only route by which a shipped build can ever be replaced.
-        SUFeedURL: https://hivinz.com/appcast.xml
-        # The public half of the EdDSA key in the login keychain. Sparkle
-        # refuses any update not signed by its private half, so a hijacked feed
-        # or a swapped download cannot install code. Losing the private key
-        # means no existing install can ever be updated again — back it up.
+        # SUFeedURL: (intentionally omitted — see above)
+        # The public half of the EdDSA key. Harmless with no feed; kept so
+        # restoring SUFeedURL is the only change needed to turn updates back on.
         SUPublicEDKey: rmUfT5r49nR+3HdkbR5/YYLghfnAi6L49eOk3sIegSk=
-        # Set explicitly so Sparkle never asks on first launch. Left unset, it
-        # shows a "check for updates automatically?" prompt, which is exactly
-        # the permission this is meant to avoid.
-        SUEnableAutomaticChecks: true
+        # No automatic checks: without a feed they would only ever fail.
+        SUEnableAutomaticChecks: false
         # Never downloads unasked: a new version is offered in the notch and
         # installed when Update is chosen — see `Updater`.
         SUAutomaticallyUpdate: false
-        SUScheduledCheckInterval: 86400
+        SUScheduledCheckInterval: 0
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.vinz.codenotch
