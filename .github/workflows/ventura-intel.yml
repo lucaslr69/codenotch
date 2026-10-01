@@ -50,20 +50,20 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: Codenotch-${{ steps.version.outputs.value }}-ventura-intel-${{ github.sha }}
+          name: Gauge-${{ steps.version.outputs.value }}-ventura-intel-${{ github.sha }}
           path: build/ci/*.dmg
           if-no-files-found: error
 
       - name: Explain how to open it
         run: |
           {
-            echo "### Codenotch ${{ steps.version.outputs.value }} — Intel build for macOS 13"
+            echo "### Gauge ${{ steps.version.outputs.value }} — Intel build for macOS 13"
             echo
             echo "Download the artifact below, unzip it, and open the \`.dmg\`."
-            echo "Drag Codenotch to /Applications, then clear the quarantine flag once:"
+            echo "Drag Gauge to /Applications, then clear the quarantine flag once:"
             echo
             echo '```'
-            echo "xattr -dr com.apple.quarantine /Applications/Codenotch.app"
+            echo "xattr -dr com.apple.quarantine /Applications/Gauge.app"
             echo '```'
             echo
             echo "If macOS says the app is *damaged*, that is the quarantine flag — run the command above."

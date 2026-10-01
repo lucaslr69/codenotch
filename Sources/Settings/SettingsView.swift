@@ -344,7 +344,7 @@ private struct SettingsQuitRow: View {
                 Image(systemName: "power")
                     .font(.system(size: 12, weight: .regular))
                     .frame(width: 18)
-                Text(L10n.t("Quit Codenotch"))
+                Text(L10n.t("Quit Gauge"))
                     .font(.system(size: 13, weight: .regular))
             }
             .foregroundStyle(isHovered ? Self.hoverRed : Color.white.opacity(0.55))
@@ -583,7 +583,7 @@ struct SettingsView: View {
                     .resizable()
                     .interpolation(.high)
                     .frame(width: 22, height: 22)
-                Text("Codenotch")
+                Text("Gauge")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
             }
@@ -622,7 +622,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 SettingsQuitRow(quit: quit)
                 HStack(spacing: 8) {
-                    Text("Codenotch \(updater.currentVersion)")
+                    Text("Gauge \(updater.currentVersion)")
                         .font(.system(size: 11, weight: .regular))
                         .foregroundStyle(.white.opacity(0.32))
                     Spacer(minLength: 0)

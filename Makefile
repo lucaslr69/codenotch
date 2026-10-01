@@ -89,8 +89,8 @@ verify-deps:
 run: build
 	@APP=$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
 		-configuration Debug -showBuildSettings 2>/dev/null \
-		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Codenotch.app; \
-	pkill -x Codenotch 2>/dev/null; sleep 0.5; \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Gauge.app; \
+	pkill -x Gauge 2>/dev/null; sleep 0.5; \
 	open "$$APP"
 
 # Build a Release .app, sign it with whatever identity is available (Developer
@@ -106,10 +106,10 @@ install: gen
 		-configuration Release $(DEV_SIGN) build
 	@APP=$$(xcodebuild -project $(PROJECT) -scheme $(SCHEME) -destination '$(DEST)' \
 		-configuration Release -showBuildSettings 2>/dev/null \
-		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Codenotch.app; \
-	pkill -x Codenotch || true; \
+		| awk -F' = ' '/ BUILT_PRODUCTS_DIR/ {print $$2; exit}')/Gauge.app; \
+	pkill -x Gauge || true; \
 	cp -R "$$APP" /Applications/; \
-	open /Applications/Codenotch.app
+	open /Applications/Gauge.app
 
 clean:
 	rm -rf build DerivedData $(PROJECT)
@@ -127,7 +127,7 @@ clean:
 # → App-Specific Passwords. Not your Apple ID password.
 
 RELEASE_DIR := build/release
-APP_NAME    := Codenotch
+APP_NAME    := Gauge
 # The label of the stored notarytool credential in the login keychain, not
 # anything to do with the app's name — it was created before the rename and
 # renaming the variable is what broke `make release` after it. Recreating it

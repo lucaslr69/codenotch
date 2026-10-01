@@ -7,6 +7,9 @@ import SwiftUI
 /// labels and ordering change without losing an existing choice.
 enum AccentColorChoice: String, CaseIterable, Identifiable {
     case system
+    /// The Gauge fork's signature accent — a calm, instrument-coloured teal. It
+    /// is the default (see `Preferences`) and leads the swatch row.
+    case gauge = "4fbfb3"
     case pink = "ff33e1"
     case red = "eb4236"
     case orange = "eb8436"
@@ -23,6 +26,7 @@ enum AccentColorChoice: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .system:   return L10n.t("Device accent color")
+        case .gauge:    return L10n.t("Gauge teal")
         case .pink:     return "#FF33E1"
         case .red:      return "#EB4236"
         case .orange:   return "#EB8436"
@@ -39,11 +43,14 @@ enum AccentColorChoice: String, CaseIterable, Identifiable {
     var color: Color {
         switch self {
         case .system:   return Color(nsColor: .controlAccentColor)
+        case .gauge:    return Color(hex: 0x4FBFB3)
         case .pink:     return Color(hex: 0xFF33E1)
         case .red:      return Color(hex: 0xEB4236)
         case .orange:   return Color(hex: 0xEB8436)
         case .yellow:   return Color(hex: 0xFFD400)
-        case .green:    return Palette.ample
+        // An explicit green: `Palette.ample` is now the gauge teal, so pointing
+        // this at it would turn the green swatch teal.
+        case .green:    return Color(hex: 0x00FF88)
         case .teal:     return Color(hex: 0x00E5CC)
         case .blue:     return Color(hex: 0x36A8EB)
         case .indigo:   return Color(hex: 0x6C5CE7)

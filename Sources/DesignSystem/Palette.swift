@@ -29,10 +29,16 @@ enum Palette {
     /// Named so `UsageBand.rampColor` can interpolate between them per-appearance rather
     /// than blending two already-resolved `Color`s (which would mix in whichever appearance
     /// happened to be current when the `Color` was built, not the one it draws in).
-    static let amplePair: (dark: UInt32, light: UInt32) = (0x00FF88, 0x00A356)
-    static let watchPair: (dark: UInt32, light: UInt32) = (0xF2FF00, 0xB08800)
+    // Gauge fork: the healthy band is the signature "gauge teal" instead of the
+    // original neon green, so the ramp, the activity-success tick and the
+    // accent default all read as one calm, instrument-coloured family. Watch and
+    // critical are softened from pure yellow/orange-red to a muted amber and a
+    // warmer red — still unmistakable as pressure, less shouty under the clean
+    // minimalist look.
+    static let amplePair: (dark: UInt32, light: UInt32) = (0x4FBFB3, 0x2FA093)
+    static let watchPair: (dark: UInt32, light: UInt32) = (0xF2C14E, 0xB0821E)
     /// Already 3.5:1 on white, so the warning colour is the same in both.
-    static let criticalPair: (dark: UInt32, light: UInt32) = (0xFF3F00, 0xFF3F00)
+    static let criticalPair: (dark: UInt32, light: UInt32) = (0xFF5A3C, 0xFF5A3C)
 
     static let ample         = Color(dark: NSColor(hex: amplePair.dark), light: NSColor(hex: amplePair.light))
     static let watch         = Color(dark: NSColor(hex: watchPair.dark), light: NSColor(hex: watchPair.light))

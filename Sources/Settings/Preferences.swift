@@ -896,8 +896,11 @@ final class Preferences: ObservableObject {
             .flatMap(WeeklyRing.init(rawValue:)) ?? .off
         // On unless turned off: it is how the notch is carried to another edge,
         // and a control that is missing by default is one nobody finds.
+        // Gauge fork default: the signature teal, not the device accent, so a
+        // fresh install wears the fork's own colour out of the box. An existing
+        // stored choice still wins.
         self.accentColor = defaults.string(forKey: Keys.accentColor)
-            .flatMap(AccentColorChoice.init(rawValue:)) ?? .system
+            .flatMap(AccentColorChoice.init(rawValue:)) ?? .gauge
         self.notchSurfaceStyle = defaults.string(forKey: Keys.notchSurfaceStyle)
             .flatMap(NotchSurfaceStyle.init(rawValue:)) ?? .glass
         let storedWatchLimit = defaults.object(forKey: Keys.watchLimit) as? Double ?? 0.50
