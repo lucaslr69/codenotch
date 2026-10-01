@@ -26,6 +26,10 @@ jobs:
   ventura-intel:
     name: Intel disk image for macOS 13
     runs-on: macos-26
+    # Needed to publish the rolling "latest" release below. GITHUB_TOKEN gets it;
+    # no personal token or login is involved.
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
 
@@ -70,3 +74,30 @@ jobs:
             echo
             echo "x86_64 only. Runs on macOS 13 (Ventura) and later, Intel or Apple Silicon via Rosetta."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # The artifact above needs a GitHub login to download and expires. This
+      # publishes the same dmg as a plain file on a rolling "latest" release, so
+      # the README's download button has a stable public URL
+      # (releases/latest/download/Gauge.dmg) that always resolves to the newest
+      # build. The release and its tag are recreated each run so "latest" tracks
+      # the newest commit; only runs on the branch, never on a pull request.
+      - name: Publish rolling release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp "$(ls build/ci/*.dmg | head -1)" Gauge.dmg
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create latest Gauge.dmg \
+            --target "$GITHUB_SHA" \
+            --title "Gauge ${{ steps.version.outputs.value }} (latest)" \
+            --latest \
+            --notes "Rolling build from the newest commit on \`ventura-intel\` (\`${GITHUB_SHA:0:7}\`).
+
+          Universal (Intel + Apple Silicon), macOS 13 (Ventura) or later. Ad-hoc signed, **not notarized** — after dragging **Gauge** to \`/Applications\`, clear the quarantine flag once:
+
+          \`\`\`sh
+          xattr -dr com.apple.quarantine /Applications/Gauge.app
+          \`\`\`
+
+          If macOS says the app is *damaged*, that is the quarantine flag — run the command above."

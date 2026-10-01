@@ -46,12 +46,14 @@ notch placement on any screen edge, session alerts, and the phone link. See the
 [Codenotch README](https://github.com/vinzdg/codenotch#readme) for the full
 provider list and the finer details of how each reading is sourced.
 
-## Get it
+## Download
 
-There's no signed release; builds come from CI. Open the **Ventura Intel build**
-workflow under this repo's **Actions** tab (it also runs on every push to
-`ventura-intel`), download the artifact, unzip it, and open the `.dmg`. Drag
-**Gauge** to `/Applications`, then clear the quarantine flag once:
+[![Download for macOS](docs/design/download-macos.svg)](../../releases/latest/download/Gauge.dmg)
+
+That button is the disk image itself — a rolling **latest** release the CI
+rebuilds and republishes on every push to `ventura-intel`, so `Gauge.dmg` always
+resolves to the newest build. Drag **Gauge** to `/Applications`, then clear the
+quarantine flag once:
 
 ```sh
 xattr -dr com.apple.quarantine /Applications/Gauge.app
@@ -63,6 +65,9 @@ download — run the command above.
 Universal binary, macOS 13 (Ventura) or later, Intel or Apple Silicon. The build
 is ad-hoc signed (no Developer ID), so it is not notarized — hence the
 quarantine step.
+
+Prefer a specific commit's build? Every run of the **Ventura Intel build**
+workflow (the **Actions** tab) also keeps the dmg as a downloadable artifact.
 
 ## Build from source
 
