@@ -3,6 +3,11 @@ import Foundation
 enum ProviderKind: Equatable {
     case usage
     case localRuntime
+    /// The Mac itself, not an account — the memory monitor's cell. It carries a
+    /// window with a used fraction like any other, so the ring, hover card and
+    /// geometry all treat it as an ordinary cell; the kind only marks that there
+    /// is no provider behind it to refresh or sign into. See `MemoryMonitor`.
+    case system
 }
 
 /// How recent a reading has to be to answer a fetch.

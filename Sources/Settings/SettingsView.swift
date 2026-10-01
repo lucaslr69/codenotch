@@ -868,6 +868,11 @@ struct SettingsView: View {
                 Text(L10n.t("Claude's main ring shows today's share of the weekly limit — a seventh a day, counted from the weekly reset — instead of the session. The session moves to the thin ring and the card; alerts follow the daily ring."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+
+                Toggle(L10n.t("Memory monitor"), isOn: $preferences.showMemoryMonitor)
+                Text(L10n.t("A ring for this Mac's own memory, beside the providers. It fills with the share of RAM in active use and turns amber then red as pressure climbs; the hover card shows the figure in GB."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
                 Picker(L10n.t("Show"), selection: $preferences.notchVisibility) {
