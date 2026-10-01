@@ -78,6 +78,14 @@ enum NotchLayout {
     static let localArcMinimumSweep: CGFloat = 0.06
     static let glyphSize     = Design.px(46)
     static let ringLabelGap  = Design.px(26.9)
+    /// How far the reading is lifted toward its dial. The gauge is open at the
+    /// bottom, so its lowest ink sits well above the ring frame's edge — leaving
+    /// `ringLabelGap` measured from that edge opens a gap far larger than the
+    /// frame suggests, and the reading drifts down toward the next cell's dial.
+    /// Lifting the reading by roughly that empty span restores the intended
+    /// spacing to its own dial and the separation from the one below; purely
+    /// visual, so the cell's height and the ring's position are unchanged.
+    static let gaugeReadingRise = Design.px(21)
 
     // The activity indicator. Not in the design frame — sized to sit in the gap
     // between the glyph (46px across) and the inside edge of the track (86px),

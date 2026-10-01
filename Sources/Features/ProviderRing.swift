@@ -316,7 +316,10 @@ struct ProviderCell: View {
                 weeklyRing: weeklyRing,
                 bandOverride: snapshot.bandOverride
             )
-            if showsReading { reading }
+            if showsReading {
+                // Lifted into the dial's open bottom — see `gaugeReadingRise`.
+                reading.offset(y: -NotchLayout.gaugeReadingRise)
+            }
         }
         .frame(height: NotchLayout.cellExtent)
         .accessibilityElement(children: .ignore)
