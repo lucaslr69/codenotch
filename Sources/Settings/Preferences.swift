@@ -247,6 +247,22 @@ final class Preferences: ObservableObject {
         didSet { defaults.set(showMemoryMonitor, forKey: Keys.showMemoryMonitor) }
     }
 
+    /// Whether the Mac's own processor load gets a ring. Off by default, and a
+    /// switch of its own rather than a share of the memory one: the notch is
+    /// width-constrained, and three system rings crowding out the provider
+    /// rings would spend the app's own subject on the machine's. See
+    /// `CPUMonitor`.
+    @Published var showCPUMonitor: Bool {
+        didSet { defaults.set(showCPUMonitor, forKey: Keys.showCPUMonitor) }
+    }
+
+    /// Whether the Mac's own GPU load gets a ring. Off by default, for the same
+    /// reason as the processor one. The cell is absent anyway on hardware whose
+    /// driver publishes no figure we can read — see `GPUMonitor`.
+    @Published var showGPUMonitor: Bool {
+        didSet { defaults.set(showGPUMonitor, forKey: Keys.showGPUMonitor) }
+    }
+
     /// Whether DeepSeek's current peak/off-peak billing phase is shown in its
     /// usage card. Enabled by default because the card's pricing rows are
     /// useful only when the rule is visible and understood.
@@ -579,6 +595,8 @@ final class Preferences: ObservableObject {
         static let deepSeekPricingSchedule = "deepSeekPricingSchedule"
         static let showCodexExtraLimits = "showCodexExtraLimits"
         static let showMemoryMonitor = "showMemoryMonitor"
+        static let showCPUMonitor = "showCPUMonitor"
+        static let showGPUMonitor = "showGPUMonitor"
     }
 
     /// The budget read straight from disk, off the main actor.
@@ -869,6 +887,9 @@ final class Preferences: ObservableObject {
         self.weeklyHeadline = defaults.bool(forKey: Keys.weeklyHeadline)
         self.showCodexExtraLimits = Self.storedShowCodexExtraLimits(defaults: defaults)
         self.showMemoryMonitor = defaults.bool(forKey: Keys.showMemoryMonitor)
+        // Off by default, both of them: see the properties.
+        self.showCPUMonitor = defaults.bool(forKey: Keys.showCPUMonitor)
+        self.showGPUMonitor = defaults.bool(forKey: Keys.showGPUMonitor)
         self.deepSeekPricingEnabled = defaults.object(forKey: Keys.deepSeekPricingEnabled) as? Bool ?? true
         if let data = defaults.data(forKey: Keys.deepSeekPricingSchedule),
            let schedule = try? JSONDecoder().decode(DeepSeekPricing.Schedule.self, from: data) {

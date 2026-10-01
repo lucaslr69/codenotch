@@ -14,9 +14,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var ollamaRelay: OllamaActivityRelay?
     private var lmstudioMetrics: LMStudioMetrics?
     private var preferences: Preferences?
-    /// The Mac's own memory ring, off unless the owner turns it on. See
-    /// `MemoryMonitor`.
+    /// The Mac's own system rings, each off unless the owner turns it on. See
+    /// `MemoryMonitor`, `CPUMonitor` and `GPUMonitor`.
     private let memoryMonitor = MemoryMonitor()
+    private let cpuMonitor = CPUMonitor()
+    private let gpuMonitor = GPUMonitor()
     private var settings: SettingsWindowController?
     private var whatsNew: WhatsNewWindowController?
     /// Held for the life of the app: releasing it stops the scheduled checks.
@@ -739,32 +741,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // what the vendor said. Paired with the preference so flipping the
             // toggle redraws at once, without a fetch. The weekly-first ring
             // is laid the same way, and for the same reasons — see `drawn`.
-            // The memory monitor's cell is laid over the store's snapshots on the
-            // way out, the same as the daily-pace and weekly rings: it is the
-            // Mac's reading, not a provider's, and the store keeps only what the
-            // vendors said. Paired with its own snapshot so a fresh sample
-            // redraws, and with the preference so flipping the toggle adds or
-            // drops the cell at once. The monitor publishes nil while off, so
-            // nothing is appended then.
+            // The system monitors' cells are laid over the store's snapshots on
+            // the way out, the same as the daily-pace and weekly rings: they are
+            // the Mac's readings, not a provider's, and the store keeps only what
+            // the vendors said. Paired with their own snapshots so a fresh sample
+            // redraws, and with the preferences so flipping a toggle adds or
+            // drops a cell at once. Each monitor publishes nil while off, and the
+            // GPU one also while the driver says nothing readable, so nothing is
+            // appended in either case.
+            //
+            // Folded into one publisher of its own first because `combineLatest`
+            // takes at most three others, and the snapshots, the two ring
+            // preferences and three monitors are six. Memory stays first so a Mac
+            // that already had that ring on does not see its cell move.
+            let systemCells = memoryMonitor.$snapshot
+                .combineLatest(cpuMonitor.$snapshot, gpuMonitor.$snapshot)
+                .map { memory, cpu, gpu in [memory, cpu, gpu].compactMap { $0 } }
+
             store.$notchSnapshots
                 .combineLatest(preferences.$claudeDailyPaceRing, preferences.$weeklyHeadline)
-                .combineLatest(memoryMonitor.$snapshot)
+                .combineLatest(systemCells)
                 .receive(on: RunLoop.main)
-                .sink { [weak fleet] base, memory in
+                .sink { [weak fleet] base, system in
                     let (snapshots, paced, weekly) = base
-                    var drawn = Self.drawn(snapshots, weekly: weekly, paced: paced)
-                    if let memory { drawn.append(memory) }
-                    fleet?.setSnapshots(drawn)
+                    let drawn = Self.drawn(snapshots, weekly: weekly, paced: paced)
+                    fleet?.setSnapshots(drawn + system)
                 }
                 .store(in: &cancellables)
 
-            // The monitor only runs its timer while the ring is on, so an off
-            // switch costs nothing. Driven here rather than inside the monitor so
-            // it never has to know about preferences.
+            // A monitor only runs its timer while its ring is on, so an off
+            // switch costs nothing. Driven here rather than inside the monitors so
+            // they never have to know about preferences.
             memoryMonitor.setEnabled(preferences.showMemoryMonitor)
             preferences.$showMemoryMonitor
                 .receive(on: RunLoop.main)
                 .sink { [weak self] enabled in self?.memoryMonitor.setEnabled(enabled) }
+                .store(in: &cancellables)
+
+            cpuMonitor.setEnabled(preferences.showCPUMonitor)
+            preferences.$showCPUMonitor
+                .receive(on: RunLoop.main)
+                .sink { [weak self] enabled in self?.cpuMonitor.setEnabled(enabled) }
+                .store(in: &cancellables)
+
+            gpuMonitor.setEnabled(preferences.showGPUMonitor)
+            preferences.$showGPUMonitor
+                .receive(on: RunLoop.main)
+                .sink { [weak self] enabled in self?.gpuMonitor.setEnabled(enabled) }
                 .store(in: &cancellables)
 
             // Not `drawn`: the weekly-first ring is for the rings alone. The

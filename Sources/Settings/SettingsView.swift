@@ -875,6 +875,18 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
 
+                Toggle(L10n.t("CPU monitor"), isOn: $preferences.showCPUMonitor)
+                Text(L10n.t("A ring for this Mac's own processor, beside the providers. It fills with the share of time the cores spent busy since the last sample, so it reads as a rate rather than a total."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Toggle(L10n.t("GPU monitor"), isOn: $preferences.showGPUMonitor)
+                Text(L10n.t("A ring for this Mac's own graphics processor, read from the driver's own figure. Some Macs publish nothing this can read, and on those the ring stays away rather than showing a zero."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
                 Picker(L10n.t("Show"), selection: $preferences.notchVisibility) {
                     ForEach(NotchVisibility.allCases) { Text($0.title).tag($0) }
                 }

@@ -44,10 +44,33 @@ enum ProviderGlyph: String, Codable, Equatable {
     /// The Mac's own memory cell. Not a brand: drawn from the `memorychip` system
     /// symbol rather than an asset or a traced outline. See `ProviderGlyphView`.
     case memory
+    /// The Mac's own processor cell, drawn from the `cpu` system symbol.
+    case cpu
+    /// The Mac's own GPU cell.
+    ///
+    /// SF Symbols has no GPU mark — the whole 9,184-symbol catalogue was
+    /// searched and `memorychip` is the only thing close — so this stands a
+    /// render primitive in for one until a drawn `glyph-gpu` lands, which
+    /// `assetName` would then prefer without a change here.
+    case gpu
 
     /// If an asset with this name is in the bundle it wins over the traced
     /// outline — drop a PDF/SVG export from Figma in and it is picked up.
     var assetName: String { self == .ollamaLocal ? "glyph-ollama" : "glyph-\(rawValue)" }
+
+    /// The SF Symbol a cell draws when it has neither a brand asset nor a
+    /// traced outline — the system cells, which are not brands at all.
+    ///
+    /// Nil for every provider, which is what sends it down the asset and
+    /// outline path in `ProviderGlyphView`.
+    var systemSymbolName: String? {
+        switch self {
+        case .memory: return "memorychip"
+        case .cpu: return "cpu"
+        case .gpu: return "cube.transparent"
+        default: return nil
+        }
+    }
 
     /// How much to scale this mark so it reads the same size as the others.
     ///
@@ -90,8 +113,8 @@ enum ProviderGlyph: String, Codable, Equatable {
         // the same scale brings this ink to the same extent.
         case .qianwenAI: return 0.97
         case .devin, .qwen, .gemma, .meta, .deepseek, .mistral: return 1.0
-        // The system symbol is already sized to its own box; leave it be.
-        case .memory: return 1.0
+        // The system symbols are already sized to their own box; leave them be.
+        case .memory, .cpu, .gpu: return 1.0
         }
     }
 
@@ -107,7 +130,7 @@ enum ProviderGlyph: String, Codable, Equatable {
         // glyph-kimi in the asset catalogue are drawn instead.
         case .glm:    return GlyphOutline.glm
         case .devin, .qwen, .gemma, .meta, .deepseek, .mistral, .lmstudio,
-             .qianwenAI, .amp, .apify, .memory: return []
+             .qianwenAI, .amp, .apify, .memory, .cpu, .gpu: return []
         case .grok:   return GlyphOutline.grok
         case .opencode: return GlyphOutline.opencode
         case .commandcode: return GlyphOutline.commandcode
@@ -155,16 +178,20 @@ struct ProviderGlyphView: View {
                 Image(nsImage: image)
                     .resizable()
                     .scaledToFit()
-            } else if glyph == .memory {
-                // No asset and no traced outline: the memory cell is the one mark
-                // that comes from SF Symbols. Template-rendered so it takes the
-                // ring's colour like every other glyph.
-                Image(systemName: "memorychip")
-                    .resizable()
-                    .scaledToFit()
             } else if let image = NSImage(named: glyph.assetName) {
                 Image(nsImage: image)
                     .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+            } else if let symbol = glyph.systemSymbolName {
+                // Below the asset lookup, not above it, so the rule that a
+                // bundled asset wins holds for the system cells too — dropping
+                // a drawn `glyph-gpu` in replaces the stand-in symbol with no
+                // code change. No `glyph-memory`, `glyph-cpu` or `glyph-gpu`
+                // exists today, so this is the branch all three take.
+                // Template-rendered so they take the ring's colour like every
+                // other glyph.
+                Image(systemName: symbol)
                     .resizable()
                     .scaledToFit()
             } else {
