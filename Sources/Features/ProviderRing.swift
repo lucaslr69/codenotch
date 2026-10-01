@@ -1,13 +1,15 @@
 import AppKit
 import SwiftUI
 
-/// The ring around a provider glyph: a grey track with a coloured arc that
-/// starts at 12 o'clock and sweeps clockwise by the fraction used.
+/// The dial around a provider glyph: a 270° segmented gauge open at the bottom,
+/// its segments lighting from the lower-left up to the fraction used, with a
+/// needle tip marking the exact reading. (The Gauge fork's indicator, in place
+/// of the original full ring.)
 ///
 /// When that provider is doing something right now, a second, much thinner arc
-/// appears *inside* the ring, in the gap between the glyph and the track. It is
-/// deliberately a different radius, a different weight and a neutral colour, so
-/// it reads as a separate fact rather than as the usage number moving.
+/// appears *inside* the dial, in the gap between the glyph and the segments. It
+/// is deliberately a different radius, a different weight and a neutral colour,
+/// so it reads as a separate fact rather than as the usage number moving.
 struct ProviderRing: View {
     /// Nil when the provider reports what is left but never says out of what —
     /// there is no arc to draw, and inventing one would be a lie in a shape.
@@ -89,48 +91,50 @@ struct ProviderRing: View {
         weeklyRing == .inside && activity != nil && activity?.state != .idle
     }
 
+    // The segmented dial's stroke, the needle's overshoot past the arc, and the
+    // inset that keeps both inside the ring-sized frame.
+    private var gaugeStroke: CGFloat { NotchLayout.progressStroke }
+    private var gaugeOvershoot: CGFloat { NotchLayout.progressStroke * 0.9 }
+    private var gaugeInset: CGFloat { gaugeStroke / 2 + gaugeOvershoot }
+
     var body: some View {
         ZStack {
             // Dimming applies to the usage reading only. Whether Claude is
             // working right now is known first-hand and stays at full strength
             // even when the percentage behind it has gone stale.
             ZStack {
-                Circle()
-                    .strokeBorder(Palette.ringTrack, lineWidth: NotchLayout.trackStroke)
+                // The dial's groove: every segment, faint. The lit span and the
+                // needle are drawn over it.
+                GaugeSegments(fraction: 1, inset: gaugeInset)
+                    .stroke(Palette.ringTrack,
+                            style: StrokeStyle(lineWidth: gaugeStroke, lineCap: .round))
 
                 if localPerformance != nil || localContextFraction != nil {
-                    // Two facts on one ring: the arc is the context filling up,
-                    // the colour is the last response's speed. Inset by half the
-                    // stroke so a full arc lands exactly where the solid
-                    // `strokeBorder` ring used to, and a runtime with no context
-                    // reading looks as it always did. Grey until a speed exists:
-                    // the quota colours would say something a local model has
-                    // no quota to mean.
-                    Circle()
-                        .inset(by: NotchLayout.progressStroke / 2)
-                        .trim(from: 0, to: localSweep)
-                        .stroke(
-                            localPerformance?.band.color ?? Palette.textSecondary,
-                            style: StrokeStyle(lineWidth: NotchLayout.progressStroke, lineCap: .round)
-                        )
-                        .rotationEffect(.degrees(-90))
+                    // Two facts on one dial: the lit span is the context filling
+                    // up, its colour the last response's speed. Grey until a
+                    // speed exists — the quota colours would say something a
+                    // local model has no quota to mean.
+                    GaugeSegments(fraction: Double(localSweep), inset: gaugeInset)
+                        .stroke(localPerformance?.band.color ?? Palette.textSecondary,
+                                style: StrokeStyle(lineWidth: gaugeStroke, lineCap: .round))
                         .animation(NotchMotion.reading, value: localSweep)
                         .animation(NotchMotion.reading, value: localPerformance?.band)
                 } else if usedFraction != nil {
-                    Circle()
-                        .inset(by: NotchLayout.trackStroke / 2)
-                        .trim(from: 0, to: sweep)
-                        .stroke(
-                            primaryRingColor,
-                            style: StrokeStyle(lineWidth: NotchLayout.progressStroke, lineCap: .round)
-                        )
-                        // Refreshing spins the reading itself rather than
-                        // overlaying a separate spinner: the thing being
-                        // refetched is the thing that should move, and a second
-                        // arc on the same track only competes with it.
-                        .rotationEffect(.degrees(-90 + spin))
-                        // A ring that snaps to a new value reads as a glitch; one
-                        // that sweeps reads as a measurement being taken.
+                    GaugeSegments(fraction: Double(sweep), inset: gaugeInset)
+                        .stroke(primaryRingColor,
+                                style: StrokeStyle(lineWidth: gaugeStroke, lineCap: .round))
+                        // A dial that snaps to a new value reads as a glitch; one
+                        // whose segments light in sequence reads as a measurement.
+                        .animation(NotchMotion.reading, value: sweep)
+                        .animation(NotchMotion.reading, value: band)
+
+                    // The needle tip marks the exact reading. Refreshing spins it
+                    // a full turn — the pointer sweeping the dial is the "taking a
+                    // measurement" cue the old ring's spin used to give.
+                    GaugeNeedle(fraction: Double(sweep), overshoot: gaugeOvershoot, inset: gaugeInset)
+                        .stroke(primaryRingColor,
+                                style: StrokeStyle(lineWidth: gaugeStroke * 1.15, lineCap: .round))
+                        .rotationEffect(.degrees(spin))
                         .animation(NotchMotion.reading, value: sweep)
                         .animation(NotchMotion.reading, value: band)
                 }
@@ -153,16 +157,14 @@ struct ProviderRing: View {
                     // length, and without something behind it that is
                     // indistinguishable from the feature being broken. Codex
                     // opened its week at 0% and read as missing.
-                    Circle()
-                        .inset(by: inset)
+                    GaugeArc(fraction: 1, inset: inset)
                         .stroke(Palette.ringTrack,
                                 style: StrokeStyle(lineWidth: NotchLayout.weeklyRingStroke,
+                                                   lineCap: weeklyRingDashed ? .butt : .round,
                                                    dash: weeklyRingDashed ? [4, 2] : []))
                         .opacity(reduceTransparency ? 1 : 0.7)
 
-                    Circle()
-                        .inset(by: inset)
-                        .trim(from: 0, to: weeklySweep)
+                    GaugeArc(fraction: Double(weeklySweep), inset: inset)
                         .stroke(
                             weeklyRingColor,
                             style: StrokeStyle(lineWidth: NotchLayout.weeklyRingStroke,
@@ -170,7 +172,6 @@ struct ProviderRing: View {
                                                dash: weeklyRingDashed ? [4, 2] : [])
                         )
                         .opacity(reduceTransparency ? 1 : 0.8)
-                        .rotationEffect(.degrees(-90))
                         .animation(NotchMotion.reading, value: weeklySweep)
                         .animation(NotchMotion.reading, value: weeklyBand)
                 }
@@ -543,5 +544,112 @@ struct ProviderReading: View {
                    height: NotchLayout.percentLineHeight)
             .contentTransition(.numericText())
             .animation(NotchMotion.reading, value: text)
+    }
+}
+
+// MARK: - The Gauge dial
+
+/// Geometry for the fork's signature indicator: a 270° dial open at the bottom,
+/// drawn in place of the original full ring. Angles are in SwiftUI's own space
+/// (y-down), so the sweep runs from the lower-left (135°) clockwise over the top
+/// to the lower-right (405°), leaving the gap at the bottom. Arcs are sampled as
+/// short polylines rather than `addArc`, so there is no clockwise/flip ambiguity
+/// to get wrong, and round line caps make the samples read as smooth arcs.
+enum GaugeGeometry {
+    static let startDeg: Double = 135
+    static let sweepDeg: Double = 270
+    static let segmentCount = 20
+    static let segmentGapDeg: Double = 3
+
+    static func point(_ center: CGPoint, _ radius: CGFloat, _ deg: Double) -> CGPoint {
+        CGPoint(x: center.x + radius * CGFloat(cos(deg * .pi / 180)),
+                y: center.y + radius * CGFloat(sin(deg * .pi / 180)))
+    }
+
+    static func sample(into path: inout Path, center: CGPoint, radius: CGFloat,
+                       from a0: Double, to a1: Double, steps: Int) {
+        guard steps > 0 else { return }
+        for i in 0...steps {
+            let a = a0 + (a1 - a0) * Double(i) / Double(steps)
+            let p = point(center, radius, a)
+            if i == 0 { path.move(to: p) } else { path.addLine(to: p) }
+        }
+    }
+
+    /// The radius the dial sits at inside a ring-sized frame, after leaving the
+    /// stroke and needle overshoot room not to clip the frame edge.
+    static func radius(in rect: CGRect, inset: CGFloat) -> CGFloat {
+        max(0, min(rect.width, rect.height) / 2 - inset)
+    }
+}
+
+/// The dial's segments up to `fraction` (0...1 of the 270° sweep). Draw it once
+/// faint for the whole groove and again coloured for the lit span; as `fraction`
+/// animates, segments light one at a time rather than the arc sliding.
+struct GaugeSegments: Shape {
+    var fraction: Double
+    var inset: CGFloat = 0
+    var animatableData: Double {
+        get { fraction }
+        set { fraction = newValue }
+    }
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = GaugeGeometry.radius(in: rect, inset: inset)
+        let n = GaugeGeometry.segmentCount
+        let step = GaugeGeometry.sweepDeg / Double(n)
+        let gap = GaugeGeometry.segmentGapDeg
+        let f = min(max(fraction, 0), 1)
+        for i in 0..<n where (Double(i) + 0.5) / Double(n) <= f + 1e-9 {
+            let a0 = GaugeGeometry.startDeg + step * Double(i) + gap / 2
+            let a1 = GaugeGeometry.startDeg + step * Double(i + 1) - gap / 2
+            GaugeGeometry.sample(into: &path, center: center, radius: radius, from: a0, to: a1, steps: 4)
+        }
+        return path
+    }
+}
+
+/// The continuous dial arc, trimmed to `fraction` of the sweep — for the thinner
+/// weekly ring, where discrete segments would be too busy at its smaller radius.
+struct GaugeArc: Shape {
+    var fraction: Double
+    var inset: CGFloat = 0
+    var animatableData: Double {
+        get { fraction }
+        set { fraction = newValue }
+    }
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = GaugeGeometry.radius(in: rect, inset: inset)
+        let f = min(max(fraction, 0), 1)
+        guard f > 0 else { return path }
+        GaugeGeometry.sample(into: &path, center: center, radius: radius,
+                             from: GaugeGeometry.startDeg,
+                             to: GaugeGeometry.startDeg + GaugeGeometry.sweepDeg * f, steps: 80)
+        return path
+    }
+}
+
+/// The needle tip: a short radial marker at the value angle, overshooting the
+/// arc on each side so it reads as a pointer against the segments.
+struct GaugeNeedle: Shape {
+    var fraction: Double
+    var overshoot: CGFloat
+    var inset: CGFloat = 0
+    var animatableData: Double {
+        get { fraction }
+        set { fraction = newValue }
+    }
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = GaugeGeometry.radius(in: rect, inset: inset)
+        let f = min(max(fraction, 0), 1)
+        let a = GaugeGeometry.startDeg + GaugeGeometry.sweepDeg * f
+        path.move(to: GaugeGeometry.point(center, radius - overshoot, a))
+        path.addLine(to: GaugeGeometry.point(center, radius + overshoot, a))
+        return path
     }
 }

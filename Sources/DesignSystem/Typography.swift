@@ -4,11 +4,13 @@ import SwiftUI
 /// track `Design.scale` along with everything else.
 enum Typography {
     /// The percent under each provider ring. Cap height 27px in the frame.
-    static let percent = Font.system(size: Design.fontSize(capPixels: 27), weight: .semibold)
+    /// Monospaced on the Gauge fork, for the instrument-panel reading that goes
+    /// with the segmented dial.
+    static let percent = Font.system(size: Design.fontSize(capPixels: 27), weight: .semibold, design: .monospaced)
 
     /// "30%/70%": the 5h and weekly readings together, a step smaller so the
     /// pair fits roughly the width one reading used to.
-    static let percentPair = Font.system(size: Design.fontSize(capPixels: 22), weight: .semibold)
+    static let percentPair = Font.system(size: Design.fontSize(capPixels: 22), weight: .semibold, design: .monospaced)
 
     /// The one ring's percentage on the other side of the Mac's notch, where it
     /// has the whole depth to itself rather than a line under the ring: sized
