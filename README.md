@@ -43,11 +43,27 @@ so what you're spending and what it's costing the machine read side by side.
 | **The Mac's own meters** | Opt-in dials for **RAM**, **CPU** and **GPU**, on the same gauge as the providers — see *The Mac's own meters* below. |
 | **Auto-update off** | Sparkle is disabled — the official feed only serves macOS 15 builds. |
 
-Everything else works as in upstream — the providers it reads (Claude Code,
-Cursor, Codex, Copilot, Gemini, GLM, Grok, local Ollama / LM Studio, and more),
-notch placement on any screen edge, session alerts, and the phone link. See the
-[Codenotch README](https://github.com/vinzdg/codenotch#readme) for the full
-provider list and how each reading is sourced.
+## ◴ &nbsp;How to read a dial
+
+The segments fill with the share of the limit already spent, and the colour
+changes band as it climbs:
+
+| | | |
+|---|---|---|
+| ![](https://img.shields.io/badge/%E2%80%82-4FBFB3?style=flat-square) | `#4FBFB3` | **Under 50%** — room to work. |
+| ![](https://img.shields.io/badge/%E2%80%82-F2C14E?style=flat-square) | `#F2C14E` | **50 – 70%** — tightening. |
+| ![](https://img.shields.io/badge/%E2%80%82-FF5A3C?style=flat-square) | `#FF5A3C` | **Over 70%** — nearly out, and it stays red once the limit is actually hit, until the window resets. |
+
+Both limits are adjustable, and by default the colour **jumps** at them rather
+than sliding — a flat teal becomes a flat amber the moment you cross 50%. If you
+would rather see it coming, **Colour ramp** blends continuously across the whole
+range instead, turning that exact amber as it passes the watch limit. It's opt-in
+because changing the look of a notch somebody already reads at a glance isn't
+something an update should do unannounced.
+
+The teal is the accent, so it's yours to change. The two warning colours aren't:
+their whole job is to interrupt whatever else is on screen, and a tunable warning
+colour is one that somebody eventually tunes into invisibility.
 
 ## ▦ &nbsp;The Mac's own meters
 
@@ -71,6 +87,27 @@ contract either: the key names differ by GPU family. When nothing recognisable
 is published, **the dial doesn't appear at all**. A missing meter is honest; one
 pinned at zero on hardware we can't read would be a lie.
 
+## ◈ &nbsp;What it reads
+
+**Cloud accounts** — Amp · Antigravity · Apify · Claude · Codex · Command Code ·
+Cursor · DeepSeek · Devin · Gemini API · GitHub Copilot · GLM · Grok · Kilo ·
+Kimi · Kiro · MiniMax · OpenAI · OpenCode · Perplexity · QianwenAI
+
+**On this Mac** — Ollama · LM Studio
+
+**Anything else** — a custom endpoint, for a provider with no dial of its own
+
+Several are picked up from credentials the tool already wrote on this Mac;
+others take a key or a local URL you paste once in Settings. Either way a
+reading never pretends to be more than it is — a percentage the app worked out
+itself rather than one the provider reported is printed with a leading `~`, so
+an estimate never passes for an official figure.
+
+Which is which, and how each reading is sourced, is documented in the
+[Codenotch README](https://github.com/vinzdg/codenotch#readme) and unchanged in
+this fork. So are notch placement on any screen edge, session alerts, and the
+phone link.
+
 ## ↓ &nbsp;Install
 
 The <a href="../../releases/latest/download/Gauge.dmg">**Download**</a> button is
@@ -92,7 +129,8 @@ Universal binary, macOS 13 (Ventura) or later, Intel or Apple Silicon. Prefer a
 specific commit's build? Every run of the **Ventura Intel build** workflow (the
 **Actions** tab) also keeps the dmg as a downloadable artifact.
 
-## ⚙ &nbsp;Build from source
+<details>
+<summary><strong>⚙ &nbsp;Build from source</strong></summary>
 
 ```sh
 brew install xcodegen create-dmg   # once
@@ -105,6 +143,8 @@ target, scheme and bundle id stay `Codenotch` / `com.vinz.codenotch` on purpose:
 CI, the login-keychain “Always Allow” grant and the stored preferences all key
 off those, so renaming only the product keeps settings and builds intact. Run
 with `CODENOTCH_DEMO=1` to see fixed sample data instead of live readings.
+
+</details>
 
 ## ♥ &nbsp;Credits & license
 
