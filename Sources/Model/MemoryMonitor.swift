@@ -22,7 +22,12 @@ final class MemoryMonitor: ObservableObject {
     private var timer: Timer?
     private let interval: TimeInterval
 
-    init(interval: TimeInterval = 4) {
+    /// `nonisolated` so the app can hold it as a stored-property default
+    /// (`private let memoryMonitor = MemoryMonitor()`) from `AppDelegate`'s own
+    /// init, which is not main-actor-isolated. Safe because it only stores the
+    /// interval — it touches no isolated state. Everything that does runs
+    /// through `setEnabled`/`sample`, which stay on the main actor.
+    nonisolated init(interval: TimeInterval = 4) {
         self.interval = interval
     }
 
