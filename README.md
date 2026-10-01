@@ -29,7 +29,9 @@ its own icon.
 Hover a dial for its limit windows and when they reset — Claude's shows the same
 **current session** window `claude /usage` leads with, so the two never disagree.
 A thin arc spins inside a dial while a session is busy, and the notch opens itself
-for a few seconds when an agent finishes or stops to ask you something.
+for a few seconds when an agent finishes or stops to ask you something. Opt-in
+dials for the Mac's own **RAM**, **CPU** and **GPU** sit at the end of the strip,
+so what you're spending and what it's costing the machine read side by side.
 
 ## ✦ &nbsp;What makes it Gauge
 
@@ -38,6 +40,7 @@ for a few seconds when an agent finishes or stops to ask you something.
 | **macOS 13 (Ventura) and up** | Upstream needs macOS 15. The deployment target is 13.0 and every newer API sits behind an availability check, so newer-OS flourishes fall back gracefully on Ventura. |
 | **Universal / Intel build** | A GitHub Actions workflow cross-compiles an `x86_64 + arm64` disk image that runs on Intel Macs. |
 | **The dial** | A **270° segmented gauge** open at the bottom with a needle tip, in place of the full ring — a calm **gauge teal** (`#4FBFB3`) accent, monospaced readings, and a gauge for the app and menu-bar icons. |
+| **The Mac's own meters** | Opt-in dials for **RAM**, **CPU** and **GPU**, on the same gauge as the providers — see *The Mac's own meters* below. |
 | **Auto-update off** | Sparkle is disabled — the official feed only serves macOS 15 builds. |
 
 Everything else works as in upstream — the providers it reads (Claude Code,
@@ -45,6 +48,28 @@ Cursor, Codex, Copilot, Gemini, GLM, Grok, local Ollama / LM Studio, and more),
 notch placement on any screen edge, session alerts, and the phone link. See the
 [Codenotch README](https://github.com/vinzdg/codenotch#readme) for the full
 provider list and how each reading is sourced.
+
+## ▦ &nbsp;The Mac's own meters
+
+Gauge also reads the machine it runs on. Three more dials sit at the end of the
+strip, drawn on the same gauge and hovering the same way as the providers:
+
+| | |
+|---|---|
+| **RAM** | The share of memory in active use — what's active, wired and compressed over the physical total. Cached and purgeable pages are left out on purpose: macOS keeps those full by design, so counting them would pin the dial near the top and say nothing. The hover card gives the figure in GB. |
+| **CPU** | The share of time the cores spent busy between two samples — user, system and nice over everything including idle, summed across cores. It's a **rate, not a total**: the kernel only offers counters that climb since boot, so the dial reads what the Mac is doing now rather than what it has done all week. |
+| **GPU** | The busiest accelerator's load, taken from the graphics driver's own figure in the IO registry. On a dual-GPU Intel Mac that's whichever of the integrated and discrete chip is working, since the idle one would otherwise mask it. |
+
+Each one switches on independently under **Settings → Appearance → Notch**, and
+all three ship **off** — the notch has only so much width, and the point is that
+you pick the ones you care about.
+
+The GPU figure has no public API. `powermetrics` is the documented route and it
+needs root, which a menu-bar app can't have, so Gauge reads the driver's
+`PerformanceStatistics` dictionary instead — no entitlement, no root, but no
+contract either: the key names differ by GPU family. When nothing recognisable
+is published, **the dial doesn't appear at all**. A missing meter is honest; one
+pinned at zero on hardware we can't read would be a lie.
 
 ## ↓ &nbsp;Install
 
